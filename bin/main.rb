@@ -2,6 +2,9 @@
 # rubocop: disable Layout/LineLength, Metrics/MethodLength, Metrics/AbcSize
 # frozen_string_literal: true
 
+require_relative '../lib/result.rb'
+require_relative '../lib/search.rb'
+
 def print_result(results_per_page, page_number)
   ra = ''
   (results_per_page * (page_number - 1) + 1..results_per_page * page_number).each do |v|    
@@ -40,6 +43,8 @@ loop do
     puts 'You must type a topic. What do you want to search?: '
     topic = gets.chomp
   end
+
+  search = Search.new(topic)
 
   total_results = 46
   results_per_page = '1'
