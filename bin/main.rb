@@ -1,4 +1,3 @@
-# !/usr/bin/env ruby
 # rubocop: disable Layout/LineLength, Metrics/MethodLength, Metrics/AbcSize
 # frozen_string_literal: true
 
@@ -46,7 +45,7 @@ loop do
 
   search = Search.new(topic)
 
-  total_results = 46
+  total_results = search.total_results
   results_per_page = '1'
   options_for_results = []
 
