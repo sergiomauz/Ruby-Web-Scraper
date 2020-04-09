@@ -3,22 +3,6 @@
 require_relative '../lib/result.rb'
 require_relative '../lib/search.rb'
 
-def print_result(results_per_page, page_number)
-  ra = ''
-  (results_per_page * (page_number - 1) + 1..results_per_page * page_number).each do |v|
-    ra += "\n-------------"
-    ra += "\nQ #{v}: What is Lorem Ipsum?"
-    ra += "\nD #{v}: Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letra..."
-    ra += "\nTags: Lorem, Ipsum, Dummy, Text"
-    ra += "\nVotes: 100 | Answers: 100"
-    ra += "\nDate: asked Jun 10' 20"
-    ra += "\nAuthor: John Doe"
-    ra += "\nVisit: https://localhost.xyz"
-  end
-  ra += "\n-------------"
-  ra
-end
-
 system('clear')
 puts '--------------------------------'
 puts 'Welcome to this Web Scraper'
@@ -48,27 +32,16 @@ loop do
   results_per_page = '1'
   options_for_results = []
 
-
-  puts "\n------------\n"
-  puts search.result[0].question.to_s
-  puts "------------\n"
-
-
-
-
   if total_results.positive?
     puts "\nThere are #{total_results} results for '#{topic}'.\n"
     choose_message = 'How many results per page would you like to show?:'
 
-    if total_results > 10 && total_results <= 20
-      choose_message += "\n(1): 10 results per page.\n(2): Show all results."
+    if total_results > 15 && total_results <= 30
+      choose_message += "\n(1): 15 results per page.\n(2): Show all results."
       options_for_results = %w[1 2]
-    elsif total_results > 20 && total_results <= 30
-      choose_message += "\n(1): 10 results per page.\n(2): 20 results per page.\n(3): Show all results."
-      options_for_results = %w[1 2 3]
     elsif total_results > 30
-      choose_message += "\n(1): 10 results per page.\n(2): 20 results per page.\n(3): 30 results per page."
-      options_for_results = %w[1 2 3]
+      choose_message += "\n(1): 15 results per page.\n(2): 30 results per page."
+      options_for_results = %w[1 2]
     end
 
     if !options_for_results.empty?
@@ -82,7 +55,8 @@ loop do
       results_per_page = '1'
     end
 
-    total_pages = (total_results % (10 * results_per_page.to_i)).zero? ? (total_results / (10 * results_per_page.to_i)) : (total_results / (10 * results_per_page.to_i)).to_i + 1
+    total_pages = (total_results % (15 * results_per_page.to_i)).zero? ? (total_results / (15 * results_per_page.to_i)) : (total_results / (15 * results_per_page.to_i)).to_i + 1
+
     puts "\nThere are #{total_pages} page(s). Showing page 1 of #{total_pages}\n"
     if total_pages > 1
       options_for_results = (1..total_pages).map(&:to_s).push('e')
@@ -96,10 +70,12 @@ loop do
         end
         break if page_number == 'e'
 
-        puts print_result(10 * results_per_page.to_i, page_number.to_i)
+        search.page_number = page_number.to_i
+        
+        puts search.to_string
       end
     else
-      puts print_result(10 * results_per_page.to_i, 1)
+      puts search.to_string
     end
   else
     puts "\nThere are no results for '#{topic}'.\n"
