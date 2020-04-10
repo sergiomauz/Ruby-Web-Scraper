@@ -3,6 +3,7 @@
 
 require 'nokogiri'
 require 'open-uri'
+require 'fileutils'
 
 require_relative '../lib/result.rb'
 
@@ -45,6 +46,19 @@ class Search
     str
   end
 
+  def to_file
+    str = to_prompt
+    begin
+      FileUtils.mkdir_p('scrap')
+      file = File.open('scrap/results.txt', 'w')
+      file.write(str)
+    rescue IOError => e
+      raise e
+    ensure
+      file&.close
+    end
+  end
+
   def request_info
     @result = []
     @html_doc = Nokogiri.HTML(URI.open(url_for_scraping))
@@ -72,8 +86,8 @@ class Search
 
           r.question = item.at_css("a[class='question-hyperlink']").content.strip
           r.visit_url = WEB_SITE + item.at_css("a[class='question-hyperlink']")['href']
-          r.votes = item.at_css("span[class='vote-count-post ']").content
-          r.date = item.at_css("span[class='relativetime']").content
+          r.votes = item.at_css("span[class='vote-count-post ']").content.strip
+          r.date = item.at_css("span[class='relativetime']").content.strip
           r.author = item.at_css("div[class='started fr'] a").is_a?(NilClass) ? item.at_css("div[class='started fr']").content.strip.sub("answered #{r.date} by ", '') : item.at_css("div[class='started fr'] a").content
           r.resume = item.at_css("div[class='excerpt']").content.strip.gsub(/\s+/, ' ')
 

@@ -2,6 +2,7 @@
 
 require_relative '../lib/result.rb'
 require_relative '../lib/search.rb'
+require_relative '../main_options.rb'
 
 system('clear')
 puts '--------------------------------'
@@ -9,23 +10,11 @@ puts 'Welcome to this Web Scraper'
 puts 'You can ask for any topic about programming and it will be searched in stackoverflow.com'
 puts '--------------------------------'
 
-puts "\nDo you want to start searching? (y/n)"
-start_search = gets.chomp
-while %w[y n].none?(start_search)
-  puts "\nYou must choose a valid option. Do you want to start searching? (y/n)"
-  start_search = gets.chomp
-end
-
+start_search = Options.for_start_search
 loop do
   break unless start_search == 'y'
 
-  puts "\nWhat do you want to search?: "
-  topic = gets.chomp
-  while topic.empty?
-    puts 'You must type a topic. What do you want to search?: '
-    topic = gets.chomp
-  end
-
+  topic = Options.for_topic
   search = Search.new(topic)
   search.request_info
 
@@ -38,39 +27,36 @@ loop do
     total_pages = 33 if total_pages > 33
 
     puts "\nThere are #{search.total_results} results for '#{search.topic}'. Available #{total_pages} page(s) .\n"
-
     if total_pages > 1
       options_for_results = (1..total_pages).map(&:to_s).push('e')
-      choose_message = "Which page do you want to show?\n(Type a number from 1 to #{total_pages} or 'e' for exit): "
-
       loop do
-        puts "\n" + choose_message
-        page_number = gets.chomp
-        while options_for_results.none?(page_number)
-          puts "\nYou must choose an option. #{choose_message}"
-          page_number = gets.chomp
-        end
+        page_number = Options.for_page_number(options_for_results, total_pages)
         break if page_number == 'e'
 
         search.page_number = page_number.to_i
         search.request_info
-
-        puts search.to_prompt
+        choose_output = Options.for_choose_output
+        if choose_output == '1'
+          search.to_file
+          puts "\nYour results are in 'scrap/results.txt'"
+        else
+          puts search.to_prompt
+        end
       end
     else
-      puts search.to_prompt
+      choose_output = Options.for_choose_output
+      if choose_output == '1'
+        search.to_file
+        puts "\nYour results are in 'scrap/results.txt'"
+      else
+        puts search.to_prompt
+      end
     end
   else
     puts "\nThere are no results for '#{search.topic}'.\n"
   end
 
-  choose_message = 'Would you like to start a new search? (y/n)'
-  puts "\n" + choose_message
-  start_search = gets.chomp
-  while %w[y n].none?(start_search)
-    puts "\nYou must choose an option. #{choose_message}"
-    start_search = gets.chomp
-  end
+  start_search = Options.for_start_search
 end
 
 # rubocop: enable Metrics/BlockLength
