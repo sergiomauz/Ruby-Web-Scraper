@@ -1,4 +1,4 @@
-# rubocop: disable Layout/LineLength, Metrics/BlockLength
+# rubocop: disable Metrics/BlockLength
 
 require_relative '../lib/result.rb'
 require_relative '../lib/search.rb'
@@ -27,40 +27,22 @@ loop do
   end
 
   search = Search.new(topic)
+  search.request_info
 
-  total_results = search.total_results
-  results_per_page = '1'
-  options_for_results = []
+  if search.total_results.positive?
 
-  if total_results.positive?
-    puts "\nThere are #{total_results} results for '#{topic}'.\n"
-    choose_message = 'How many results per page would you like to show?:'
+    # 15 results per page is the standard for a search in stackoverflow
+    total_pages = (search.total_results % 15).zero? ? (search.total_results / 15) : (search.total_results / 15).to_i + 1
 
-    if total_results > 15 && total_results <= 30
-      choose_message += "\n(1): 15 results per page.\n(2): Show all results."
-      options_for_results = %w[1 2]
-    elsif total_results > 30
-      choose_message += "\n(1): 15 results per page.\n(2): 30 results per page."
-      options_for_results = %w[1 2]
-    end
+    # stackoverflow has a limit of 33 pages
+    total_pages = 33 if total_pages > 33
 
-    if !options_for_results.empty?
-      puts "\n" + choose_message
-      results_per_page = gets.chomp
-      while options_for_results.none?(results_per_page)
-        puts "\nYou must choose an option. #{choose_message}"
-        results_per_page = gets.chomp
-      end
-    else
-      results_per_page = '1'
-    end
+    puts "\nThere are #{search.total_results} results for '#{search.topic}'. Available #{total_pages} page(s) .\n"
 
-    total_pages = (total_results % (15 * results_per_page.to_i)).zero? ? (total_results / (15 * results_per_page.to_i)) : (total_results / (15 * results_per_page.to_i)).to_i + 1
-
-    puts "\nThere are #{total_pages} page(s). Showing page 1 of #{total_pages}\n"
     if total_pages > 1
       options_for_results = (1..total_pages).map(&:to_s).push('e')
       choose_message = "Which page do you want to show?\n(Type a number from 1 to #{total_pages} or 'e' for exit): "
+
       loop do
         puts "\n" + choose_message
         page_number = gets.chomp
@@ -71,14 +53,15 @@ loop do
         break if page_number == 'e'
 
         search.page_number = page_number.to_i
-        
-        puts search.to_string
+        search.request_info
+
+        puts search.to_prompt
       end
     else
-      puts search.to_string
+      puts search.to_prompt
     end
   else
-    puts "\nThere are no results for '#{topic}'.\n"
+    puts "\nThere are no results for '#{search.topic}'.\n"
   end
 
   choose_message = 'Would you like to start a new search? (y/n)'
@@ -90,4 +73,4 @@ loop do
   end
 end
 
-# rubocop: enable Layout/LineLength, Metrics/BlockLength
+# rubocop: enable Metrics/BlockLength

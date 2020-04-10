@@ -1,4 +1,5 @@
-# rubocop: disable Layout/LineLength
+# rubocop: disable Layout/LineLength, Metrics/MethodLength, Metrics/AbcSize, Lint/UriEscapeUnescape
+# rubocop: disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
 
 require 'nokogiri'
 require 'open-uri'
@@ -9,78 +10,91 @@ class Search
   attr_reader :topic
   attr_reader :html_doc
   attr_reader :total_results
-  attr_reader :results_per_page  
+  attr_reader :first_request
   attr_reader :result
-
   attr_accessor :page_number
+
+  WEB_SITE = 'https://stackoverflow.com'.freeze
 
   def initialize(topic)
     @topic = topic
     @result = []
     @page_number = 1
-    load_html
+    @first_request = true
   end
 
-  def to_string 
-    load_html
-
-    ra = ''
-    @result.each do |v|
-      ra += "\n-------------"\
-            "\nQ-#{v.q_index}: #{v.question}"\
-            "\nVISIT: #{v.visit_url}"\
-            "\nTAGS: #{v.tags}"\
-            "\nVOTES: #{v.votes} | Answers: #{v.answers}"\
-            "\nDATE: Asked on #{v.date}"\
-            "\nAUTHOR: #{v.author}"            
-    end
-    ra += "\n-------------"
-    ra
-  end
-
-  private
-
-  WEB_SITE = 'https://stackoverflow.com'.freeze
-
-  def url_for_scraping
-    WEB_SITE + '/search?page=' + @page_number.to_s + '&q=' + URI.encode_www_form_component(@topic)
-  end
-
-  def load_html
-    @html_doc = Nokogiri.HTML(URI.open(url_for_scraping))
+  def to_prompt
     parse_html(@html_doc)
-  rescue LoadHtmlTypeOfException => e
+
+    str = ''
+    if @total_results.positive?
+      str += "\n-------------\nScraping #{url_for_scraping} . Started at #{Time.now.strftime('%Y-%m-%d %H:%M')}"
+      @result.each do |item|
+        str += "\n-------------"\
+            "\nTITLE-#{item.q_index} | #{item.question}"\
+            "\nVISIT: #{item.visit_url}"\
+            "\nTAGS: #{item.tags}"\
+            "\nVOTES: #{item.votes} | Answers: #{item.answers}"\
+            "\nDATE AND AUTHOR: Asked on #{item.date} by #{item.author}"\
+            "\nDETAIL: #{item.resume}"
+      end
+      str += "\n-------------\nScraping #{url_for_scraping} . Finished at #{Time.now.strftime('%Y-%m-%d %H:%M')}"
+    elsif @total_results.negative?
+      str += "\nThere was an error. The website requested a Human Verification using a Google Captcha through a browser. Try again in one minute."
+    end
+    str
+  end
+
+  def request_info
+    @result = []
+    @html_doc = Nokogiri.HTML(URI.open(url_for_scraping))
+    if @first_request
+      parse_html(@html_doc)
+      @first_request = false
+    end
+  rescue RequestInfoTypeOfException => e
     @html_doc = nil
     raise e
   end
 
+  private
+
+  def url_for_scraping
+    WEB_SITE + '/search?tab=Relevance&page=' + @page_number.to_s + '&q=' + URI.encode(@topic)
+  end
+
   def parse_html(html_doc)
-    @total_results = html_doc.at_css("div#mainbar div[class='grid--cell fl1 fs-body3 mr12']").content.to_s.delete('results').strip.to_i
-    html_doc.css("div#mainbar div[class='question-summary search-result']").each do |item|      
-      r = Result.new(item['data-position'])            
+    if html_doc.at_css("h1[class='fs-headline1 mb12']").is_a?(NilClass)
+      @total_results = html_doc.at_css("div#mainbar div[class='grid--cell fl1 fs-body3 mr12']").content.delete('results').strip.to_i
+      if @total_results.positive?
+        html_doc.css("div#mainbar div[class='question-summary search-result']").each do |item|
+          r = Result.new(item['data-position'])
 
-      r.question = item.at_css("a[class='question-hyperlink']").content.to_s.lstrip.chop[3..-1]      
-      r.visit_url = WEB_SITE + item.at_css("a[class='question-hyperlink']")['href']            
-      r.votes = item.at_css("span[class='vote-count-post ']").content
-      r.date = item.at_css("span[class='relativetime']").content
-      r.author = item.at_css("div[class='started fr'] a").content      
-      if item.at_css("div[class='status answered']").is_a?(NilClass) && item.at_css("div[class='status unanswered']").is_a?(NilClass)
-        r.answers = item.at_css("div[class='status answered-accepted'] strong").content      
-      elsif item.at_css("div[class='status answered']").is_a?(NilClass) && item.at_css("div[class='status answered-accepted']").is_a?(NilClass)
-        r.answers = item.at_css("div[class='status unanswered'] strong").content
-      else
-        r.answers = item.at_css("div[class='status answered'] strong").content      
-      end              
-      item.css("a[class='post-tag']").each { |tag|
-        r.tags += ', ' + tag
-      }
-      r.tags = r.tags.lstrip.chop[2..-1]      
+          r.question = item.at_css("a[class='question-hyperlink']").content.strip
+          r.visit_url = WEB_SITE + item.at_css("a[class='question-hyperlink']")['href']
+          r.votes = item.at_css("span[class='vote-count-post ']").content
+          r.date = item.at_css("span[class='relativetime']").content
+          r.author = item.at_css("div[class='started fr'] a").is_a?(NilClass) ? item.at_css("div[class='started fr']").content.strip.sub("answered #{r.date} by ", '') : item.at_css("div[class='started fr'] a").content
+          r.resume = item.at_css("div[class='excerpt']").content.strip.gsub(/\s+/, ' ')
 
-      @result.push(r)
+          r.answers = '0'
+          r.answers = item.at_css("div[class='status answered-accepted'] strong").content + ' [Thread with answer(s) accepted]' unless item.at_css("div[class='status answered-accepted']").is_a?(NilClass)
+          r.answers = item.at_css("div[class='status unanswered'] strong").content unless item.at_css("div[class='status unanswered']").is_a?(NilClass)
+          r.answers = item.at_css("div[class='status answered'] strong").content unless item.at_css("div[class='status answered']").is_a?(NilClass)
+
+          item.css("a[class='post-tag']").each { |tag| r.tags += ', ' + tag }
+          r.tags = r.tags.strip.empty? ? '-No tags-' : r.tags.chomp[1..-1].strip
+
+          @result.push(r)
+        end
+      end
+    else
+      @total_results = -1
     end
   rescue ParseHtmlTypeOfException => e
     raise e
   end
 end
 
-# rubocop: enable Layout/LineLength
+# rubocop: enable Layout/LineLength, Metrics/MethodLength, Metrics/AbcSize, Lint/UriEscapeUnescape
+# rubocop: enable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
