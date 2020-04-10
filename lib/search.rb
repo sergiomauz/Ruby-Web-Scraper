@@ -25,7 +25,7 @@ class Search
   end
 
   def to_prompt
-    parse_html(@html_doc)
+    parse_html
 
     str = ''
     if @total_results.positive?
@@ -63,7 +63,7 @@ class Search
     @result = []
     @html_doc = Nokogiri.HTML(URI.open(url_for_scraping))
     if @first_request
-      parse_html(@html_doc)
+      parse_html
       @first_request = false
     end
   rescue RequestInfoTypeOfException => e
@@ -77,7 +77,7 @@ class Search
     WEB_SITE + '/search?tab=Relevance&page=' + @page_number.to_s + '&q=' + URI.encode(@topic)
   end
 
-  def parse_html(html_doc)
+  def parse_html
     if html_doc.at_css("h1[class='fs-headline1 mb12']").is_a?(NilClass)
       @total_results = html_doc.at_css("div#mainbar div[class='grid--cell fl1 fs-body3 mr12']").content.delete('results').strip.to_i
       if @total_results.positive?
