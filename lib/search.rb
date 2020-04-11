@@ -69,11 +69,12 @@ class Search
       end
     rescue RequestInfoTypeOfException => e
       @html_doc = nil
+      raise e
     end
     @html_doc
   end
 
-  private 
+  private
 
   def url_for_scraping
     WEB_SITE + '/search?tab=Relevance&page=' + @page_number.to_s + '&q=' + URI.encode(@topic)
