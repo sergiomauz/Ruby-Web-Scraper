@@ -11,7 +11,7 @@
 ## How to Install
 
 - Install Ruby in your system. To install Ruby, you can read the [Documentation](https://www.ruby-lang.org/en/documentation/installation/)
-- Download it as a [Zip File](https://github.com/peterrobert/TiC-Tac-Toe-Ruby-Project/archive/fourth-milestone.zip). If you have installed Git in your system, you can clone it using **git clone** command.
+- Download it as a [Zip File](https://github.com/sergiomauz/Ruby-Web-Scraper/archive/development.zip). If you have installed Git in your system, you can clone it using **git clone** command.
 - For Windows users, open Command Prompt and run:
     ```console
     C:\>cd Tic-Tac-Toe-folder
