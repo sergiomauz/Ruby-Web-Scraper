@@ -28,8 +28,8 @@ class Options
     while topic.empty?
       puts "\nYou must type a topic. #{message_for_choose}"
       topic = gets.chomp
-    end  
-    topic  
+    end
+    topic
   end
 
   def self.for_start_search
