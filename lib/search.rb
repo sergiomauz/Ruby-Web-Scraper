@@ -1,4 +1,4 @@
-# rubocop: disable Layout/LineLength, Metrics/MethodLength, Metrics/AbcSize
+# rubocop: disable Layout/LineLength, Metrics/MethodLength, Metrics/AbcSize, Metrics/BlockNesting
 # rubocop: disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
 
 require 'nokogiri'
@@ -44,7 +44,7 @@ class Search
       str += "\nThere was an error. The website requested a Human Verification using a Google Captcha through a browser. Try again in one minute."
     elsif @total_results == -2
       str += "\nThere was an error. Try to use another words to search, you should be more specific."
-    else 
+    else
       str += "\nThere are no results for '#{@topic}'.\n"
     end
     str
@@ -93,22 +93,22 @@ class Search
         if @total_results.positive?
           @html_doc.css("div#mainbar div[class='question-summary search-result']").each do |item|
             r = Result.new(item['data-position'])
-  
+
             r.question = item.at_css("a[class='question-hyperlink']").content.strip
             r.visit_url = WEB_SITE + item.at_css("a[class='question-hyperlink']")['href']
             r.votes = item.at_css("span[class='vote-count-post ']").content.strip
             r.date = item.at_css("span[class='relativetime']").content.strip
             r.author = item.at_css("div[class='started fr'] a").is_a?(NilClass) ? item.at_css("div[class='started fr']").content.strip.sub("answered #{r.date} by ", '') : item.at_css("div[class='started fr'] a").content
             r.resume = item.at_css("div[class='excerpt']").content.strip.gsub(/\s+/, ' ')
-  
+
             r.answers = '0'
             r.answers = item.at_css("div[class='status answered-accepted'] strong").content + ' [Thread with answer(s) accepted]' unless item.at_css("div[class='status answered-accepted']").is_a?(NilClass)
             r.answers = item.at_css("div[class='status unanswered'] strong").content unless item.at_css("div[class='status unanswered']").is_a?(NilClass)
             r.answers = item.at_css("div[class='status answered'] strong").content unless item.at_css("div[class='status answered']").is_a?(NilClass)
-  
+
             item.css("a[class='post-tag']").each { |tag| r.tags += ', ' + tag }
             r.tags = r.tags.strip.empty? ? '-No tags-' : r.tags.chomp[1..-1].strip
-  
+
             @result.push(r)
           end
         end
@@ -121,5 +121,5 @@ class Search
   end
 end
 
-# rubocop: enable Layout/LineLength, Metrics/MethodLength, Metrics/AbcSize
+# rubocop: enable Layout/LineLength, Metrics/MethodLength, Metrics/AbcSize, Metrics/BlockNesting
 # rubocop: enable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
