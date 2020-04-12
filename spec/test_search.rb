@@ -21,4 +21,11 @@ RSpec.describe Search do
         expect(search.topic).to eql(ruby)
     end        
   end
+
+  describe '#after_request_info' do      
+    it '-html_doc- attribute is NOT NIL after execute -request_info-' do                 
+      expect(search.request_info).to be_instance_of(Nokogiri::HTML::Document)      
+    end    
+  end 
+
 end
