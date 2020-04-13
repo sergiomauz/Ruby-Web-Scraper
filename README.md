@@ -1,5 +1,5 @@
 # Ruby Web Scraper
-> For educational purposes. This code is useful for scraping the stackoverflow website
+> For educational purposes. This code is useful for scraping the [stackoverflow](https://stackoverflow.com/search?q=)  website
 
 
 ## Built With
