@@ -1,10 +1,7 @@
 # rubocop: disable Metrics/BlockLength
 
-require 'nokogiri'
-require 'open-uri'
-require_relative '../lib/result.rb'
 require_relative '../lib/search.rb'
-require_relative '../bin/main_options.rb'
+require_relative '../lib/main_options.rb'
 
 system('clear')
 puts '--------------------------------'

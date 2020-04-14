@@ -1,5 +1,5 @@
 # Ruby Web Scraper
-> For educational purposes. This code is useful for scraping the [stackoverflow](https://stackoverflow.com/search?q=)  website
+> For educational purposes. This code is useful for scraping the [stackoverflow](https://stackoverflow.com/search?q=) website
 
 
 ## Built With
@@ -14,12 +14,12 @@
 - Download it as a [Zip File](https://github.com/sergiomauz/Ruby-Web-Scraper/archive/development.zip). If you have installed Git in your system, you can clone it using **git clone** command.
 - For Windows users, open Command Prompt and run:
     ```console
-    C:\>cd Tic-Tac-Toe-folder
-    C:\Tic-Tac-Toe-folder>ruby bin/main.rb
+    C:\>cd Ruby-Web-Scraper-folder
+    C:\Ruby-Web-Scraper-folder>ruby bin/main.rb
     ```
 - For Linux and Mac users, open a Terminal and run:
     ```console
-    $ cd Tic-Tac-Toe-folder
+    $ cd Ruby-Web-Scraper-folder
     $ ruby ./bin/main.rb
     ``` 
 - Enjoy!

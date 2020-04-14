@@ -1,5 +1,4 @@
-# rubocop: disable Layout/LineLength, Metrics/MethodLength, Metrics/AbcSize, Metrics/BlockNesting
-# rubocop: disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+# rubocop: disable Metrics/AbcSize, Layout/LineLength
 
 require 'nokogiri'
 require 'open-uri'
@@ -31,13 +30,9 @@ class Search
     if @total_results.positive?
       str += "\n-------------\nScraping #{url_for_scraping} . Started at #{Time.now.strftime('%Y-%m-%d %H:%M')}"
       @result.each do |item|
-        str += "\n-------------"\
-            "\nTITLE-#{item.q_index} | #{item.question}"\
-            "\nVISIT: #{item.visit_url}"\
-            "\nTAGS: #{item.tags}"\
-            "\nVOTES: #{item.votes} | Answers: #{item.answers}"\
-            "\nDATE AND AUTHOR: Asked on #{item.date} by #{item.author}"\
-            "\nDETAIL: #{item.resume}"
+        str += "\n-------------\nTITLE-#{item.q_index} | #{item.question}"\
+            "\nVISIT: #{item.visit_url} \nVOTES: #{item.votes} | Answers: #{item.answers} \nTAGS: #{item.tags}"\
+            "\nDATE AND AUTHOR: Asked on #{item.date} by #{item.author} \nDETAIL: #{item.resume}"
       end
       str += "\n-------------\nScraping #{url_for_scraping} . Finished at #{Time.now.strftime('%Y-%m-%d %H:%M')}"
     elsif @total_results == -1
@@ -84,32 +79,36 @@ class Search
     WEB_SITE + '/search?tab=Relevance&page=' + @page_number.to_s + '&q=' + URI.encode_www_form_component(@topic)
   end
 
+  def get_data(item)
+    r = Result.new(item['data-position'])
+
+    r.question = item.at_css("a[class='question-hyperlink']").content.strip
+    r.visit_url = WEB_SITE + item.at_css("a[class='question-hyperlink']")['href']
+    r.votes = item.at_css("span[class='vote-count-post ']").content.strip
+    r.date = item.at_css("span[class='relativetime']").content.strip
+    r.author = item.at_css("div[class='started fr'] a").is_a?(NilClass) ? item.at_css("div[class='started fr']").content.strip.sub("answered #{r.date} by ", '') : item.at_css("div[class='started fr'] a").content
+    r.resume = item.at_css("div[class='excerpt']").content.strip.gsub(/\s+/, ' ')
+
+    r.answers = '0'
+    r.answers = item.at_css("div[class='status answered-accepted'] strong").content + ' [Thread with answer(s) accepted]' unless item.at_css("div[class='status answered-accepted']").is_a?(NilClass)
+    r.answers = item.at_css("div[class='status unanswered'] strong").content unless item.at_css("div[class='status unanswered']").is_a?(NilClass)
+    r.answers = item.at_css("div[class='status answered'] strong").content unless item.at_css("div[class='status answered']").is_a?(NilClass)
+
+    item.css("a[class='post-tag']").each { |tag| r.tags += ', ' + tag }
+    r.tags = r.tags.strip.empty? ? '-No tags-' : r.tags.chomp[1..-1].strip
+
+    r
+  end
+
   def parse_html
-    if @html_doc.at_css("h1[class='fs-headline1 mb12']").is_a?(NilClass) || @html_doc.at_css("div[class='fs-headline1 mb12']").is_a?(NilClass)
+    if @html_doc.at_css("h1[class='fs-headline1 mb12']").is_a?(NilClass)
       if @html_doc.at_css("div#mainbar div[class='grid--cell fl1 fs-body3 mr12']").is_a?(NilClass)
         @total_results = -2
       else
         @total_results = @html_doc.at_css("div#mainbar div[class='grid--cell fl1 fs-body3 mr12']").content.delete('results').strip.to_i
         if @total_results.positive?
           @html_doc.css("div#mainbar div[class='question-summary search-result']").each do |item|
-            r = Result.new(item['data-position'])
-
-            r.question = item.at_css("a[class='question-hyperlink']").content.strip
-            r.visit_url = WEB_SITE + item.at_css("a[class='question-hyperlink']")['href']
-            r.votes = item.at_css("span[class='vote-count-post ']").content.strip
-            r.date = item.at_css("span[class='relativetime']").content.strip
-            r.author = item.at_css("div[class='started fr'] a").is_a?(NilClass) ? item.at_css("div[class='started fr']").content.strip.sub("answered #{r.date} by ", '') : item.at_css("div[class='started fr'] a").content
-            r.resume = item.at_css("div[class='excerpt']").content.strip.gsub(/\s+/, ' ')
-
-            r.answers = '0'
-            r.answers = item.at_css("div[class='status answered-accepted'] strong").content + ' [Thread with answer(s) accepted]' unless item.at_css("div[class='status answered-accepted']").is_a?(NilClass)
-            r.answers = item.at_css("div[class='status unanswered'] strong").content unless item.at_css("div[class='status unanswered']").is_a?(NilClass)
-            r.answers = item.at_css("div[class='status answered'] strong").content unless item.at_css("div[class='status answered']").is_a?(NilClass)
-
-            item.css("a[class='post-tag']").each { |tag| r.tags += ', ' + tag }
-            r.tags = r.tags.strip.empty? ? '-No tags-' : r.tags.chomp[1..-1].strip
-
-            @result.push(r)
+            @result.push(get_data(item))
           end
         end
       end
@@ -121,5 +120,4 @@ class Search
   end
 end
 
-# rubocop: enable Layout/LineLength, Metrics/MethodLength, Metrics/AbcSize, Metrics/BlockNesting
-# rubocop: enable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+# rubocop: enable Metrics/AbcSize, Layout/LineLength
