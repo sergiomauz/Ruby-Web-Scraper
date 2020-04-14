@@ -76,7 +76,7 @@ Step 6.- Steps 4 and 5 could repeat, but if you type 'e' as option, the program 
 
 ## 🤝 Contributing
 
-Contributions, issues and feature requests are welcome!. Feel free to check the [issues page](issues/).
+Contributions, issues and feature requests are welcome!. Feel free to check the [issues page](https://github.com/sergiomauz/Ruby-Web-Scraper/issues).
 
 
 ## Show your support
